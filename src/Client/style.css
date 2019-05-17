@@ -1,0 +1,40 @@
+@font-face {
+    font-family: 'Crushed';
+    src: url('Crushed-Regular.ttf');
+}
+
+.button {
+    -fx-effect: dropshadow(two-pass-box, darkgray, 10, 0.0, 4, 5);
+    -fx-background-color: rgba(222, 184, 135, 1);
+    -fx-background-radius: 15 15 15 15;
+    -fx-background-insets: 2 2 2 2;
+}
+
+.button:pressed {
+
+    -fx-background-color: rgba(180, 180, 180, 0.7);
+
+}
+
+.button:hover {
+    -fx-background-color: rgba(235, 235, 235, 0.7);
+
+}
+
+.custom-text-field {
+    -fx-fill: transparent, white, transparent, white;
+    -fx-background-radius: 0, 0, 0, 0;
+    -fx-padding: 0.166667em;
+}
+
+.custom-text-field:hover {
+    -fx-fill: transparent, #909090, transparent, white;
+    -fx-background-radius: 0, 0, 0, 0;
+    -fx-padding: 0.166667em;
+}
+
+.custom-text-field:focused {
+    -fx-fill: transparent, #009EF, transparent, white;
+    -fx-background-radius: 0, 0, 0, 0;
+    -fx-padding: 0.166667em;
+}
