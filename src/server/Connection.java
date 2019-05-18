@@ -1,7 +1,6 @@
 package server;
 
-import Common.Account;
-import Common.AccountPacket;
+import com.google.gson.Gson;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -28,20 +27,39 @@ public class Connection implements Runnable {
         running = true;
         while (running) {
             try {
-                Object object = inputStream.readObject();
-                System.out.println("recieved");
-                if (object.getClass().getSimpleName().equals("AccountPacket")) {
-                    if (((AccountPacket) object).isLoggingIn()) {
-                        Account account = ((AccountPacket) object).getAccount();
+                String string = ((String) inputStream.readObject());
+                Gson gson = new Gson();
+
+                outputStream.reset();
+                if (string.contains("account")) {
+                    AccountPacket accountPacket = gson.fromJson(string, AccountPacket.class);
+                    if (accountPacket.isLoggingIn()) {
+                        Account account = accountPacket.getAccount();
                         boolean x = Account.validateLogInAccount(account);
                         if (x) {
-                            outputStream.writeObject(object);
+                            accountPacket.setSuccess(true);
+                            outputStream.writeObject(gson.toJson(accountPacket));
                             outputStream.flush();
                         } else {
-                            ((AccountPacket) object).setSuccess(false);
-                            outputStream.writeObject(object);
+                            accountPacket.setSuccess(false);
+                            outputStream.writeObject(gson.toJson(accountPacket));
                             outputStream.flush();
                         }
+                    } else {
+
+                        Account account = accountPacket.getAccount();
+                        boolean x = Account.validateSignUpAccount(account);
+                        if (x) {
+                            Account.addAccount(account);
+                            accountPacket.setSuccess(true);
+                            outputStream.writeObject(gson.toJson(accountPacket));
+                            outputStream.flush();
+                        } else {
+                            accountPacket.setSuccess(false);
+                            outputStream.writeObject(gson.toJson(accountPacket));
+                            outputStream.flush();
+                        }
+
                     }
                 }
 
@@ -55,6 +73,9 @@ public class Connection implements Runnable {
 
     public void sendPacket(Object object) {
         try {
+
+            outputStream.reset();
+            outputStream.reset();
             outputStream.writeObject(object);
             outputStream.flush();
         } catch (IOException e) {

@@ -1,5 +1,8 @@
 package Client;
 
+import com.google.gson.Gson;
+
+
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -25,13 +28,23 @@ public class Connection implements Runnable {
         running = true;
         while (running) {
             try {
-                Object object = inputStream.readObject();
-                if (object.getClass().getSimpleName().equals("AccountPacket")) {
-                    if (!((AccountPacket) object).isSuccess()) {
-                        System.out.println("client fail");
+                String string = (String) inputStream.readObject();
+                Gson gson = new Gson();
+                if (string.contains("account")) {
+                    AccountPacket accountPacket = gson.fromJson(string, AccountPacket.class);
+                    Account account = accountPacket.getAccount();
+
+                    boolean x = accountPacket.isSuccess();
+                    if (x) {
+                        System.out.println("in main menu");//todo get to mai menu
+                        //ClientGame.makeMainMenu(Account);
+                    } else if (accountPacket.isLoggingIn()) {
+                        ClientGame.wrongLogIn();
                     } else {
-                        System.out.println("client success");
+                        ClientGame.wrongSingUp();
                     }
+
+
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -41,10 +54,10 @@ public class Connection implements Runnable {
         }
     }
 
-    public void sendPacket(Object object) {
+    public void sendPacket(String string) {
         try {
-
-            outputStream.writeObject(object);
+            outputStream.reset();
+            outputStream.writeObject(string);
             outputStream.flush();
         } catch (IOException e) {
             e.printStackTrace();

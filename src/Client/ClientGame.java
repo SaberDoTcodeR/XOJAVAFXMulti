@@ -1,8 +1,8 @@
 package Client;
 
-import Common.Account;
-import Common.AccountPacket;
+import com.google.gson.Gson;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.event.EventHandler;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
@@ -16,7 +16,6 @@ import javafx.scene.Group;
 import java.io.IOException;
 import java.net.Socket;
 
-
 public class ClientGame extends Application {
 
     public static void main(String[] args) {
@@ -26,6 +25,26 @@ public class ClientGame extends Application {
     private Socket socket;
     private Connection connection;
     public static final int WIDTH = 1000, HEIGHT = 600;
+
+    public static void wrongSingUp() {
+        Platform.runLater(new Runnable() {
+            @Override
+            public void run() {
+                Alert alert = new Alert(Alert.AlertType.ERROR, "User Name already used...");
+                alert.show();
+            }
+        });
+    }
+
+    public static void wrongLogIn() {
+        Platform.runLater(new Runnable() {
+            @Override
+            public void run() {
+                Alert alert = new Alert(Alert.AlertType.ERROR, "User Name or Password is Wrong ...");
+                alert.show();
+            }
+        });
+    }
 
     public static void primaryStageManage(Stage primaryStage) {
         ClientGame.primaryStage = primaryStage;
@@ -37,16 +56,16 @@ public class ClientGame extends Application {
     public void loginSceneManage(Group loginGroup, Scene loginScene) {
         loginGroup.getChildren().add(new ImageView(new Image("Client/119.jpg")));
         Button loginBtn = new Button("LOGIN");
-        Button signInBtn = new Button("SIGN IN");
+        Button signUpBtn = new Button("SIGN UP");
         TextField name = new TextField();
         PasswordField passwordField = new PasswordField();
 
         loginScene.getStylesheets().add(getClass().getResource("style.css").toExternalForm());
 
         buttonSetter(loginBtn, true);
-        buttonSetter(signInBtn, false);
+        buttonSetter(signUpBtn, false);
 
-        signInBtn.setFont(Font.loadFont(getClass().getResourceAsStream("Crushed-Regular.ttf"), 25));
+        signUpBtn.setFont(Font.loadFont(getClass().getResourceAsStream("Crushed-Regular.ttf"), 25));
         loginBtn.setFont(Font.loadFont(getClass().getResourceAsStream("Crushed-Regular.ttf"), 25));
         name.setFont(Font.font(20));
         passwordField.setFont(Font.font(20));
@@ -54,7 +73,7 @@ public class ClientGame extends Application {
         textFieldSetter(name, false);
         textFieldSetter(passwordField, true);
 
-        loginGroup.getChildren().addAll(name, passwordField, loginBtn, signInBtn);
+        loginGroup.getChildren().addAll(name, passwordField, loginBtn, signUpBtn);
 
         primaryStage.setScene(loginScene);
         loginBtn.setOnMouseClicked(new EventHandler<MouseEvent>() {
@@ -65,7 +84,24 @@ public class ClientGame extends Application {
                     alert.show();
                 } else {
                     Account account = new Account(name.getText(), passwordField.getText());
-                    connection.sendPacket(new AccountPacket(account, true));
+                    Gson gson = new Gson();
+                    String string = gson.toJson(new AccountPacket(account, true));
+                    connection.sendPacket(string);
+                }
+            }
+        });
+        signUpBtn.setOnMouseClicked(new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent event) {
+
+                if (name.getText().equals("") || passwordField.getText().equals("")) {
+                    Alert alert = new Alert(Alert.AlertType.ERROR, "User Name or Password is empty ...");
+                    alert.show();
+                } else {
+                    Account account = new Account(name.getText(), passwordField.getText());
+                    Gson gson = new Gson();
+                    String string = gson.toJson(new AccountPacket(account, false));
+                    connection.sendPacket(string);
                 }
             }
         });
