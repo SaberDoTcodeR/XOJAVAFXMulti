@@ -12,6 +12,7 @@ public class AccountPacket implements Serializable {
         this.loggingIn = loggingIn;
     }
 
+
     public void setSuccess(boolean success) {
         this.success = success;
     }

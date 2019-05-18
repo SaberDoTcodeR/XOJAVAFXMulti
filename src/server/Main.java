@@ -12,6 +12,10 @@ public class Main {
 
     private static ArrayList<Connection> connections = new ArrayList<>();
 
+    public static ArrayList<Connection> getConnections() {
+        return connections;
+    }
+
     public static void main(String[] args) throws IOException {
         ServerSocket serverSocket = new ServerSocket(5555);
         while (true) {
