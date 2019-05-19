@@ -1,6 +1,7 @@
 package Client;
 
 import com.google.gson.Gson;
+import server.Main;
 
 
 import java.io.EOFException;
@@ -15,6 +16,7 @@ public class Connection implements Runnable {
     private boolean running;
     private ObjectOutputStream outputStream;
     private ObjectInputStream inputStream;
+    private volatile boolean closedManual;
 
     public Connection(Socket socket) {
         try {
@@ -29,7 +31,7 @@ public class Connection implements Runnable {
     @Override
     public void run() {
         running = true;
-        while (running) {
+        while (running && !closedManual) {
             try {
                 String string = (String) inputStream.readObject();
                 Gson gson = new Gson();
@@ -39,6 +41,7 @@ public class Connection implements Runnable {
 
                     boolean x = accountPacket.isSuccess();
                     if (x) {
+                        Account.setCurrentAccount(account);
                         ClientGame.makeMainMenu(account);
                     } else if (accountPacket.isLoggingIn()) {
                         ClientGame.wrongLogIn();
@@ -51,20 +54,26 @@ public class Connection implements Runnable {
                     GamePacket gamePacket = gson.fromJson(string, GamePacket.class);
                     boolean x = gamePacket.isCreatingGame();
                     if (x) {
-                        if (gamePacket.isSuccess())
-                            System.out.println("ohh yeahhh");
-                            //ClientGame.makeGame(gamePacket.getGame());
-                        else {
+                        if (gamePacket.isSuccess()) {
+                            Account.getCurrentAccount().setGame(gamePacket.getGame());
+                            ClientGame.makeGame(gamePacket.getGame());
+                        } else {
                             ClientGame.wrongOpponent();
                         }
+                    } else {
+                        Account.getCurrentAccount().setGame(gamePacket.getGame());
+                        ClientGame.makeGame(gamePacket.getGame());
+                        if (gamePacket.getGame().getFinished() != 0)
+                            ClientGame.whoWinError(gamePacket.getGame());
                     }
                 }
             } catch (EOFException | SocketException e) {
-                while (true) {
+                while (!closedManual) {
                     try {
                         ClientGame.socket = new Socket("localhost", 5555);
                         ClientGame.connection = new Connection(ClientGame.socket);
                         System.out.println("connection client ..");
+                        ClientGame.loginSceneManage(true);
                         break;
                     } catch (ConnectException e1) {
                         // ClientGame.connectionError();
@@ -99,6 +108,7 @@ public class Connection implements Runnable {
         try {
             inputStream.close();
             outputStream.close();
+            closedManual = true;
         } catch (EOFException | SocketException e) {
             return;
         } catch (IOException e) {

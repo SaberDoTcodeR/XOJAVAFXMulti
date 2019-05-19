@@ -94,10 +94,19 @@ public class Connection implements Runnable {
                             outputStream.writeObject(gson.toJson(gamePacket2));
                         }
                     }
+                } else {
+                    int[] data = gson.fromJson(string, int[].class);
+                    game.updateMap(data);
+                    outputStream.writeObject(gson.toJson(new GamePacket(game, false)));
+                    if (game.getWhoseTurn() == 1) {
+                        game.getFirstPlayerConnection().sendPacket(gson.toJson(new GamePacket(game, false)));
+                    } else
+                        game.getSecondPlayerConnection().sendPacket(gson.toJson(new GamePacket(game, false)));
                 }
 
             } catch (EOFException | SocketException e) {
                 running = false;
+                this.getLoggedInAccount().setPlaying(false);
                 Main.getConnections().remove(this);
             } catch (IOException e) {
                 e.printStackTrace();
