@@ -1,6 +1,8 @@
 package server;
 
 
+import com.google.gson.Gson;
+
 public class Game {
 
     private int[][] map;
@@ -20,6 +22,31 @@ public class Game {
         this.secondPlayerConnection = secondPlayerConnection;
     }
 
+    public void reMatch(Connection firstPlConnection) {
+        for (Connection connection : Main.getConnections()) {
+            if (connection.getLoggedInAccount() != null && connection.getLoggedInAccount().getUserName().equals(
+                    this.getSecondPlayerAccount().getUserName())) {
+                connection.setGame(this);
+                firstPlConnection.setGame(this);
+                GamePacket gamePacket = new GamePacket(this, false);
+                gamePacket.setSuccess(true);
+                Gson gson = new Gson();
+                connection.sendPacket(gson.toJson(gamePacket));
+            }
+        }
+    }
+
+    public void quitBattle(Account account) {
+        this.secondPlayerAccount.setPlaying(false);
+        this.firstPlayerAccount.setPlaying(false);
+        this.getSecondPlayerConnection().setGame(null);
+        this.getFirstPlayerConnection().setGame(null);
+        if (this.firstPlayerAccount.getUserName().equals(account.getUserName())) {
+            this.getSecondPlayerConnection().sendPacket("quit battle");
+        } else {
+            this.getFirstPlayerConnection().sendPacket("quit battle");
+        }
+    }
 
     public void updateMap(int[] data) {
         int row = data[0];
@@ -28,6 +55,7 @@ public class Game {
         if (this.checkFinish(this.whoseTurn)) {
             this.finished = this.whoseTurn;
         } else if (this.checkDraw()) {
+            System.out.println("draw");//todo
             this.finished = 3;
         }
         if (this.whoseTurn == 1)
@@ -42,7 +70,7 @@ public class Game {
                     return false;
 
 
-        return false;
+        return true;
     }
 
     public boolean checkFinish(int x) {

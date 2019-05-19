@@ -93,7 +93,25 @@ public class Connection implements Runnable {
                             gamePacket2.setSuccess(false);
                             outputStream.writeObject(gson.toJson(gamePacket2));
                         }
+                    } else //rematch
+                    {
+                        gamePacket.getGame().reMatch(this);
+                        GamePacket gamePacket2 = new GamePacket(gamePacket.getGame(), false);
+                        gamePacket2.setSuccess(true);
+                        outputStream.writeObject(gson.toJson(gamePacket2));
                     }
+                } else if (string.contains("MSG")) {
+                    if (this.getGame().getSecondPlayerAccount().getUserName().equals(this.loggedInAccount.getUserName())) {
+                        {
+                            this.getGame().getFirstPlayerConnection().sendPacket(string);
+
+                        }
+                    } else {
+                        this.getGame().getSecondPlayerConnection().sendPacket(string);
+
+                    }
+                } else if (string.equals("quit battle")) {
+                    game.quitBattle(loggedInAccount);
                 } else {
                     int[] data = gson.fromJson(string, int[].class);
                     game.updateMap(data);
@@ -102,11 +120,11 @@ public class Connection implements Runnable {
                         game.getFirstPlayerConnection().sendPacket(gson.toJson(new GamePacket(game, false)));
                     } else
                         game.getSecondPlayerConnection().sendPacket(gson.toJson(new GamePacket(game, false)));
+
                 }
 
             } catch (EOFException | SocketException e) {
                 running = false;
-                this.getLoggedInAccount().setPlaying(false);
                 Main.getConnections().remove(this);
             } catch (IOException e) {
                 e.printStackTrace();
@@ -114,6 +132,7 @@ public class Connection implements Runnable {
                 e.printStackTrace();
             }
         }
+
     }
 
     public void sendPacket(Object object) {

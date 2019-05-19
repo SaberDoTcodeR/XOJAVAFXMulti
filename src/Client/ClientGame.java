@@ -16,6 +16,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.text.Font;
@@ -29,6 +30,7 @@ import java.io.IOException;
 import java.net.ConnectException;
 import java.net.Socket;
 import java.util.Random;
+import java.util.concurrent.ConcurrentLinkedDeque;
 
 public class ClientGame extends Application {
 
@@ -48,6 +50,7 @@ public class ClientGame extends Application {
     private static GraphicsContext mapGraphic;
     public static Socket socket;
     public static Connection connection;
+    public static TextArea messages = new TextArea();
 
     public static void raining(Circle circle) {
         Random random = new Random();
@@ -92,11 +95,23 @@ public class ClientGame extends Application {
                     Alert alert = new Alert(Alert.AlertType.INFORMATION, "You Win the Battle ...");
                     alert.show();
                 } else {
-                    Alert alert = new Alert(Alert.AlertType.INFORMATION, "You loose the Battle ...");
+                    Alert alert = new Alert(Alert.AlertType.INFORMATION, "You loose the Battle  ...");
                     alert.show();
                 }
             }
         });
+    }
+
+    public static void printOppMessage(String message) {
+        messages.appendText(message + "\n");
+    }
+
+    public static String printMessage(String message) {
+        String messagePrint = Account.getCurrentAccount().getUserName() + " : ";
+        messagePrint += message;
+
+        messages.appendText(messagePrint + "\n");
+        return messagePrint;
     }
 
     public static void makeGame(Game game) {
@@ -107,6 +122,36 @@ public class ClientGame extends Application {
                 gameScene = new Scene(gameGroup, WIDTH, HEIGHT);
                 gameGroup.getChildren().add(new ImageView(new Image("Client/119.jpg")));
 
+                messages.setFont(Font.loadFont(ClassLoader.getSystemResource("Client/Crushed-Regular.ttf").toExternalForm(), 25));
+
+                Button quitBattle = new Button("Quit Battle");
+                buttonSetter(quitBattle, WIDTH - 300, HEIGHT - 100);
+                TextField input = new TextField();
+                input.setPromptText("Enter a message here ...");
+                input.setFont(Font.loadFont(ClassLoader.getSystemResource("Client/Crushed-Regular.ttf").toExternalForm(), 25));
+                input.setPrefHeight(40);
+                input.setOnAction(event -> {
+                    try {
+                        connection.sendPacket("MSG" + printMessage(input.getText()));
+                        input.clear();
+                    } catch (Exception e) {
+                        messages.appendText("Failed to send\n");
+                    }
+                });
+
+                VBox root = new VBox(10, messages, input);
+                root.setLayoutX(650);
+                root.setLayoutY(40);
+                root.setPrefSize(300, 400);
+                gameGroup.getChildren().addAll(quitBattle, root);
+                quitBattle.setOnMouseClicked(new EventHandler<MouseEvent>() {
+                    @Override
+                    public void handle(MouseEvent event) {
+                        connection.sendPacket("quit battle");
+                        Account.getCurrentAccount().setGame(null);
+                        ClientGame.makeMainMenu(Account.getCurrentAccount());
+                    }
+                });
                 Canvas board;
                 board = new Canvas(62 * game.getSize(), 62 * game.getSize());
 
@@ -121,7 +166,7 @@ public class ClientGame extends Application {
                     message.setTextFill(Color.RED);
                 } else
                     message.setTextFill(Color.BLUE);
-                message.setFont(Font.font(ClassLoader.getSystemResource("Client/Crushed-Regular.ttf").toExternalForm(), 25));
+                message.setFont(Font.loadFont(ClassLoader.getSystemResource("Client/Crushed-Regular.ttf").toExternalForm(), 25));
 
                 BorderPane.setAlignment(message, Pos.CENTER);
                 BorderPane content = new BorderPane(board);
@@ -373,7 +418,7 @@ public class ClientGame extends Application {
     public void start(Stage primaryStage) {
         while (true) {
             try {
-                socket = new Socket("localhost", 5555);
+                socket = new Socket("194.225.47.71", 5555);
                 connection = new Connection(socket);
                 System.out.println("connection client ..");
                 break;

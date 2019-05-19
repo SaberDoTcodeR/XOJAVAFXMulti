@@ -66,6 +66,11 @@ public class Connection implements Runnable {
                         if (gamePacket.getGame().getFinished() != 0)
                             ClientGame.whoWinError(gamePacket.getGame());
                     }
+                } else if (string.contains("MSG")) {
+                    ClientGame.printOppMessage(string.substring(3));
+                } else if (string.equals("quit battle")) {
+                    Account.getCurrentAccount().setGame(null);
+                    ClientGame.makeMainMenu(Account.getCurrentAccount());
                 }
             } catch (EOFException | SocketException e) {
                 while (!closedManual) {

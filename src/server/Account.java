@@ -8,7 +8,7 @@ import java.util.ArrayList;
 public class Account {
     private String userName;
     private String passWord;
-    transient private boolean isPlaying = false;
+    transient private volatile boolean isPlaying = false;
     transient private static ArrayList<Account> accounts = new ArrayList<>();
 
     public Account(String userName, String passWord) {
@@ -27,7 +27,7 @@ public class Account {
 
     public static boolean validateOpponent(Game game, Connection firstPlConnection) {
         for (Account account1 : accounts) {
-            if (game.getSecondPlayerAccount().getUserName().equals(account1.userName) && !account1.isPlaying) {
+            if (game.getSecondPlayerAccount().getUserName().equals(account1.userName) && !game.getSecondPlayerAccount().isPlaying) {
                 for (Connection connection : Main.getConnections()) {
                     if (connection.getLoggedInAccount() != null && connection.getLoggedInAccount().userName.equals(
                             game.getSecondPlayerAccount().getUserName())) {
